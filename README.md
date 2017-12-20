@@ -38,7 +38,13 @@
 	- Asigna un volúmen persistente a tu aplicación
 	- Componentes infraestructura
 		- Nodos Master
-		- Nodos Worker	 
+		  - Kubelet
+		  - Api Server
+		  - Scheduler
+		  - etcd
+		  - Controller
+		- Nodos Worker
+		  - Proxy
 3. Kops
 	- Conceptos básicos
 	- Componentes de un cluster
