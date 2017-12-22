@@ -11,7 +11,6 @@
 
 1. Docker
 	- Conceptos básicos
-	- Instalación
 	- Arrancar tu primer contenedor
 	- Crea tu primer contenedor
 	- Enlazar contenedores
@@ -50,7 +49,9 @@
 	- Componentes de un cluster
 	- Ejemplo de creación de un cluster
 	- Modificación de componentes 
- 
+4. Mirando al futuro
+	- EKS
+	- RBAC 
 
 
 ## Referencias Externas
