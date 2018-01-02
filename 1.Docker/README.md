@@ -1,8 +1,8 @@
-#Docker
+# Docker
 
-##Conceptos básicos
+## Conceptos básicos
 
-##Arrancar tu primer contenedor
+## Arrancar tu primer contenedor
 
 La forma mas simple de arrancar un contendor y ver la salida por consola es la siguiente:
 
@@ -15,7 +15,7 @@ Indicamos que queremos arrancar un contenedor de docker desde 0
 Arrancamos el contenedor con un terminal interactivo
 ### oneboxtm/firstrun:1.0
 Es el repositorio/imagen:tag . Si se pone de esta forma, por defecto el demonio de docker ira a buscar al imagen a los repositorios de docker hub. Sino tendriamos que indicarle la url de nuestro repositorio privado (p.e. mirepo.ejemplo.com/firtsrun:1.0)
-##Crea tu primer contenedor
+## Crea tu primer contenedor
 Para crear nuestro primer contenedor necesitamos crear un fichero con el siguiente nombre: **Dockerfile** y dentro añadiremos las siguientes lineas:
 
 ```
@@ -46,14 +46,14 @@ Congrats! your first container is running
 ```
 
 
-##Opciones mas usadas
+## Opciones mas usadas
 
-##Red en docker
+## Red en docker
 
-##Enlazar contenedores
+## Enlazar contenedores
 
-##Arrancar un contenedor con volumen persistente
+## Arrancar un contenedor con volumen persistente
 
-##Wordpress + mysql
+## Wordpress + mysql
 
-##Docker-compose
+## Docker-compose
