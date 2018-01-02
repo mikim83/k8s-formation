@@ -51,7 +51,7 @@ Indicamos donde se encuentra el fichero Dockerfile. En nuestro ejemplo, en el mi
 ### -t testimage:1.0
 Idicamos un el nombre que le queremos dar a la imagen. En nuestro ejemplo se crea la imagen en el repositorio local con el nombre testimage y el tag 1.0
 ## 1.4.Opciones mas usadas de docker
-###docker ps
+### docker ps
 Mostramos los contenedores en funcionamiento
 ```
 $ docker ps
@@ -66,7 +66,7 @@ b815687e3738        oneboxtm/firstrun:1.0   "/bin/sh -c /entry..."   52 seconds 
 6369c93a65c8        test                    "/bin/sh -c 'while..."   About an hour ago   Exited (130) About an hour ago                       thirsty_knuth
 15264a742173        oneboxtm/firstrun:1.0   "/bin/sh -c /entry..."   11 days ago         Exited (130) 11 days ago                             vibrant_roentgen
 ```
-###docker start/stop/kill
+### docker start/stop/kill
 Estas opciones nos permiten arrancar, parar o matar contenedores ya creados.
 ```sh
 $ docker ps -a
