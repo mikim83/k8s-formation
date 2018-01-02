@@ -13,9 +13,12 @@
 	- Conceptos básicos
 	- Arrancar tu primer contenedor
 	- Crea tu primer contenedor
+	- Opciones mas usadas
+	- Red en docker
 	- Enlazar contenedores
 	- Arrancar un contenedor con volumen persistente
-	- docker-compose
+	- Wordpress + mysql
+	- Docker-compose
 2. Kubernetes
 	- Conceptos básicos
 	- Objetos 
