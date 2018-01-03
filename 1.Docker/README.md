@@ -198,7 +198,7 @@ Congrats! your first container is running
 ```
 
 ### Arrancar un contenedor y que se borre automaticamente cuando lo paramos
-Una opción muy util (***--rm***) es la de permitir que un contenedor se borre automaticamente cuando lo paramos o lo matamos.
+Una opción muy util ( ***--rm*** ) es la de permitir que un contenedor se borre automaticamente cuando lo paramos o lo matamos.
 ```sh
 $ docker run -ti --rm oneboxtm/firstrun:1.0
 #####################
