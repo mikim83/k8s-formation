@@ -15,6 +15,7 @@ Indicamos que queremos arrancar un contenedor de docker desde 0
 Arrancamos el contenedor con un terminal interactivo
 ### oneboxtm/firstrun:1.0
 Es el repositorio/imagen:tag . Si se pone de esta forma, por defecto el demonio de docker ira a buscar al imagen a los repositorios de docker hub. Sino tendriamos que indicarle la url de nuestro repositorio privado (p.e. mirepo.ejemplo.com/firtsrun:1.0)
+
 ## 1.3 Crea tu primer contenedor
 Para crear nuestro primer contenedor necesitamos crear un fichero con el siguiente nombre: **Dockerfile** y dentro añadiremos las siguientes lineas:
 
@@ -133,6 +134,35 @@ Si se quieren borrar todas las imagenes este comando es muy útil:
 ```sh
 $ docker rmi $(docker images -qa)
 ```
+#### docker pull/push
+Con estas opciones podemos descargarnos imagenes en local o subirlas a algun repositorio remoto. Muchos de estos respositorio, como el de docker hub, antes necesitan que nos autentiquemos, para eso usaremos el comando ***docker login***
+```sh
+$ docker pull oneboxtm/firstrun:1.0
+1.0: Pulling from oneboxtm/firstrun
+2fdfe1cd78c2: Pull complete
+7ad7ef040bbc: Pull complete
+338ec0baead8: Pull complete
+Digest: sha256:f2d85e61bbb4cfccd2813d8022d2620fc0c56e398f75b4cac31cb3181507e30f
+Status: Downloaded newer image for oneboxtm/firstrun:1.0
+$ docker pull oneboxtm/firstrun:1.0
+1.0: Pulling from oneboxtm/firstrun
+2fdfe1cd78c2: Pull complete
+7ad7ef040bbc: Pull complete
+338ec0baead8: Pull complete
+Digest: sha256:f2d85e61bbb4cfccd2813d8022d2620fc0c56e398f75b4cac31cb3181507e30f
+Status: Downloaded newer image for oneboxtm/firstrun:1.0
+$ docker login
+Login with your Docker ID to push and pull images from Docker Hub. If you don t have a Docker ID, head over to https://hub.docker.com to create one.
+Username (oneboxtm):
+Password:
+Login Succeeded
+$ docker push oneboxtm/firstrun:1.0
+The push refers to a repository [docker.io/oneboxtm/firstrun]
+28ac11fa6865: Layer already exists
+1d3e7309cca5: Layer already exists
+04a094fe844e: Layer already exists
+1.0: digest: sha256:f2d85e61bbb4cfccd2813d8022d2620fc0c56e398f75b4cac31cb3181507e30f size: 946
+```
 
 ## Opciones de arranque de los contenedores
 
@@ -213,9 +243,89 @@ PWD=/
 #####################
 Congrats! your first container is running
 ^CSIGINT RECEIVED
-13:14 $ docker ps -a
+$ docker ps -a
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
 ```
+## Opciones de creación de contenedores
+
+### Añadir un fichero o directorio a nuestra imagen
+En el directorio donde se encuentre nuestro Dockerfile crearemos un fichero que añadiremos a la imagen
+
+```sh
+echo "HOLA" > fichero.txt
+```
+Y en el Dockerfile indicamos que lo añada
+
+```sh
+FROM alpine:3.7
+MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
+COPY fichero.txt /fichero.txt
+CMD while true; do cat /fichero.txt && sleep 1 ; done
+```
+Ahora construimos la imagen y arrancamos un contenedor
+```sh
+$ docker build . -t testing
+Sending build context to Docker daemon  3.072kB
+Step 1/4 : FROM alpine:3.7
+ ---> e21c333399e0
+Step 2/4 : MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
+ ---> Using cache
+ ---> 6ec2fabafe5b
+Step 3/4 : ADD fichero.txt /fichero.txt
+ ---> 0d981c44670d
+Step 4/4 : CMD while true; do cat /fichero.txt && sleep 1 ; done
+ ---> Running in 538cf178cdb8
+ ---> 067094b62b3f
+Removing intermediate container 538cf178cdb8
+Successfully built 067094b62b3f
+Successfully tagged testing:latest
+$ docker run --rm -ti testing
+HOLA
+HOLA
+```
+También se puede usar el comando ***ADD*** , que ademas de permitir copiar un fichero local, te permite bajar automaticamente un fichero de una URL.
+
+### Definir una variable de entorno en nuestra imagen
+Podemos definir variable de entorno en nuestras imagenes. El contenido de estas variables pueden ser substituidos si se vuelven a redefinir cuando se arranca un contenedor.
+
+Contenido del Dockerfile
+```sh
+FROM alpine:3.7
+MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
+ENV TEST_ENV HOLA
+CMD while true; do echo ${TEST_ENV} && sleep 1 ; done
+```
+Volvemos a construir y ejecutamos:
+
+```sh
+$ docker build . -t testing
+Sending build context to Docker daemon  3.072kB
+Step 1/4 : FROM alpine:3.7
+ ---> e21c333399e0
+Step 2/4 : MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
+ ---> Using cache
+ ---> 6ec2fabafe5b
+Step 3/4 : ENV TEST_ENV HOLA
+ ---> Running in a6fb9a06a23a
+ ---> 8ca0bc972f94
+Removing intermediate container a6fb9a06a23a
+Step 4/4 : CMD while true; do echo ${TEST_ENV} && sleep 1 ; done
+ ---> Running in 1af4f0e90b5f
+ ---> 0d8c2260f464
+Removing intermediate container 1af4f0e90b5f
+Successfully built 0d8c2260f464
+Successfully tagged testing:latest
+$ docker run --rm -ti testing
+HOLA
+```
+Ahora volvemos a ejecutar pero volviendo a definir la variable de entorno con otro valor
+```sh
+$ docker run --rm -ti -e TEST_ENV=ADIOS testing
+ADIOS
+```
+
+
+
 
 
 ## 1.5 Red en docker
