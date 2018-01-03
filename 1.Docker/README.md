@@ -1,8 +1,8 @@
 # 1.Docker
 
-## 1.1.Conceptos básicos
+## 1.1 Conceptos básicos
 
-## 1.2.Arrancar tu primer contenedor
+## 1.2 Arrancar tu primer contenedor
 
 La forma mas simple de arrancar un contendor y ver la salida por consola es la siguiente:
 
@@ -15,7 +15,7 @@ Indicamos que queremos arrancar un contenedor de docker desde 0
 Arrancamos el contenedor con un terminal interactivo
 ### oneboxtm/firstrun:1.0
 Es el repositorio/imagen:tag . Si se pone de esta forma, por defecto el demonio de docker ira a buscar al imagen a los repositorios de docker hub. Sino tendriamos que indicarle la url de nuestro repositorio privado (p.e. mirepo.ejemplo.com/firtsrun:1.0)
-## 1.3.Crea tu primer contenedor
+## 1.3 Crea tu primer contenedor
 Para crear nuestro primer contenedor necesitamos crear un fichero con el siguiente nombre: **Dockerfile** y dentro añadiremos las siguientes lineas:
 
 ```
@@ -50,8 +50,9 @@ Indicamos que queremos construir una imagen
 Indicamos donde se encuentra el fichero Dockerfile. En nuestro ejemplo, en el mismo directorio donde estamos ejecutando el comando
 ### -t testimage:1.0
 Idicamos un el nombre que le queremos dar a la imagen. En nuestro ejemplo se crea la imagen en el repositorio local con el nombre testimage y el tag 1.0
-## 1.4.Opciones mas usadas de docker
-### docker ps
+## 1.4 Opciones mas usadas de docker
+### Operativa con contenedores e imagenes
+#### docker ps
 Mostramos los contenedores en funcionamiento
 ```
 $ docker ps
@@ -66,7 +67,7 @@ b815687e3738        oneboxtm/firstrun:1.0   "/bin/sh -c /entry..."   52 seconds 
 6369c93a65c8        test                    "/bin/sh -c 'while..."   About an hour ago   Exited (130) About an hour ago                       thirsty_knuth
 15264a742173        oneboxtm/firstrun:1.0   "/bin/sh -c /entry..."   11 days ago         Exited (130) 11 days ago                             vibrant_roentgen
 ```
-### docker start/stop/kill
+#### docker start/stop/kill
 Estas opciones nos permiten arrancar, parar o matar contenedores ya creados.
 ```sh
 $ docker ps -a
@@ -83,15 +84,146 @@ $ docker ps -a
 CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS               NAMES
 15264a742173        oneboxtm/firstrun:1.0   "/bin/sh -c /entry..."   11 days ago         Up 11 seconds                           vibrant_roentgen
 ```
+#### docker images
+Esta opcion nos permite ver las imagenes que tenemos almacenadas en local.
+```sh
+$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+oneboxtm/firstrun   1.0                 8cf8d286bcce        19 hours ago        9.57MB
+alpine              3.7                 e21c333399e0        4 weeks ago         4.14MB
+```
+
+#### docker rm
+Con esta opción podemos borrar contenedores que ya no estan funcionando (stopped o killed).
+```sh
+$ docker ps -a
+CONTAINER ID        IMAGE                   COMMAND             CREATED             STATUS                    PORTS               NAMES
+788ddd86532f        oneboxtm/firstrun:1.0   "/entrypoint.sh"    19 hours ago        Exited (0) 19 hours ago                       amazing_clarke
+docker rm 788ddd86532f
+788ddd86532f
+$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+```
+Si se quieren borrar todas los contenedores este comando es muy útil:
+
+```sh
+$ docker rm $(docker ps -qa)
+```
+#### docker rmi
+Con esta opción podemos borrar imagenes que ya no usen nuestros contenedores. Para poderlas borrar correctamente se necesita que no haya ningun contenedor creado que dependa de la imagen a borrar.
+```sh
+$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+oneboxtm/firstrun   1.0                 8cf8d286bcce        19 hours ago        9.57MB
+alpine              3.7                 e21c333399e0        4 weeks ago         4.14MB
+$ docker rmi 8cf8d286bcce
+Untagged: oneboxtm/firstrun:1.0
+Deleted: sha256:8cf8d286bcceb19503207840791f0f95e6afe17c45beb1c870cd90af6fd43f53
+Deleted: sha256:815bc55a0cedc69624704f9f441a20570c45ef7636c1d3215ba60932c6f616d3
+Deleted: sha256:ec5910c7a635ba75580ee32019c27a9e01a766bded8cbe930b39abe286b0282e
+Deleted: sha256:0dfbbaee79cac056982c08ef3d154100694b9227942fc6a4483a5510a3d11e17
+Deleted: sha256:977ec93c91986ccc48bf7a3ae3e4ae0f5938f35f50d58fcc3d8706fb0a79fbe6
+Deleted: sha256:0ca7d2c8f2593f896fe6c4fd30e0d51a0378f668a0861a6061b94229a1ac8a90
+$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+alpine              3.7                 e21c333399e0        4 weeks ago         4.14MB
+```
+Si se quieren borrar todas las imagenes este comando es muy útil:
+
+```sh
+$ docker rmi $(docker images -qa)
+```
+
+## Opciones de arranque de los contenedores
+
+### Arrancar contenedor en background 
+Con la opción ***-d*** podemos arrancar un contenedor en el modo *detached*, es decir, en modo background. 
+```sh
+$ docker run -d oneboxtm/firstrun:1.0
+9c199902f8c40914d3af94f51b0177e12d703539b998ccab11c06299cfb4a812
+$ docker ps
+CONTAINER ID        IMAGE                   COMMAND                  CREATED                  STATUS              PORTS               NAMES
+9c199902f8c4        oneboxtm/firstrun:1.0   "/bin/sh -c /entry..."   Less than a second ago   Up 2 seconds                            angry_dijkstra
+```
+### Arrancar contenedor pasandole variables de entorno
+Con la opción ***-e*** podemos pasarle una o mas variables de entorno
+
+```sh
+$ docker run -ti -e TEST1_ENV=PRUEBA1 -e TEST2_ENV=PRUEBA2 oneboxtm/firstrun:1.0
+#####################
+ENVIRONMENT VARIABLES
+no_proxy=*.local, 169.254/16
+HOSTNAME=ba2c7cce5715
+SHLVL=1
+HOME=/root
+TEST1_ENV=PRUEBA1
+TEST2_ENV=PRUEBA2
+TERM=xterm
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PWD=/
+#####################
+Congrats! your first container is running
+Congrats! your first container is running
+```
+
+### Arrancar un contenedor escuchando en uno o varios puertos
+Con la opción ***-p PUERTO_LOCAL:PUERTO_CONTENEDOR*** podemos abrir puertos para poder consultar el contenedor desde fuera
+
+```sh
+$ docker run -d -p 15060:5060 -e NCPORT=5060 oneboxtm/firstrun:1.0
+1bae82e2fefd1fb40da6d4b76dc3789518bc2b40b864c4eceb33ed8c568d6e8d
+$ telnet localhost 15060
+Trying ::1...
+Connected to localhost.
+Escape character is '^]'.
+TEST TEST TEST
+^]
+telnet> Connection closed.
+$ docker logs 1bae82e2fefd
+#####################
+ENVIRONMENT VARIABLES
+no_proxy=*.local, 169.254/16
+NCPORT=5060
+HOSTNAME=1bae82e2fefd
+SHLVL=1
+HOME=/root
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PWD=/
+#####################
+Listening on [0.0.0.0] (family 0, port 5060)
+Connection from 172.17.0.1 35076 received!
+TEST TEST TEST
+Netcat listening on port 5060
+Congrats! your first container is running
+```
+
+### Arrancar un contenedor y que se borre automaticamente cuando lo paramos
+Una opción muy util (***--rm***) es la de permitir que un contenedor se borre automaticamente cuando lo paramos o lo matamos.
+```sh
+$ docker run -ti --rm oneboxtm/firstrun:1.0
+#####################
+ENVIRONMENT VARIABLES
+no_proxy=*.local, 169.254/16
+HOSTNAME=f111d9da20ff
+SHLVL=1
+HOME=/root
+TERM=xterm
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PWD=/
+#####################
+Congrats! your first container is running
+^CSIGINT RECEIVED
+13:14 $ docker ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+```
 
 
+## 1.5 Red en docker
 
-## 1.5.Red en docker
+## 1.6 Enlazar contenedores
 
-## 1.6.Enlazar contenedores
+## 1.7 Arrancar un contenedor con volumen persistente
 
-## 1.7.Arrancar un contenedor con volumen persistente
+## 1.8 Wordpress + mysql
 
-## 1.8.Wordpress + mysql
-
-## 1.9.Docker-compose
+## 1.9 Docker-compose
