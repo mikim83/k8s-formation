@@ -6,7 +6,7 @@
 
 La forma mas simple de arrancar un contendor y ver la salida por consola es la siguiente:
 
-```sh
+```ShellSession
 $ docker run -ti oneboxtm/firstrun:1.0
 ```
 ### run
@@ -19,14 +19,14 @@ Es el repositorio/imagen:tag . Si se pone de esta forma, por defecto el demonio 
 ## 1.3 Crea tu primer contenedor
 Para crear nuestro primer contenedor necesitamos crear un fichero con el siguiente nombre: **Dockerfile** y dentro añadiremos las siguientes lineas:
 
-```
+```Dockerfile
 FROM alpine:3.7
 MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
 CMD while true; do echo "Congrats! your first container is running" && sleep 1 ; done
 ```
 Una vez tengamos el fichero, necesitamos contruir la imagen:
 
-```sh
+```ShellSession
 $ docker build . -t testimage:1.0
 Sending build context to Docker daemon  9.728kB
 Step 1/3 : FROM alpine:3.7
@@ -41,7 +41,7 @@ Successfully built cd13c4bf19fd
 Successfully tagged testimage:1.0
 ```
 Ahora ya podemos arancar un contenedor usando la nueva imagen
-```sh
+```ShellSession
 $ docker run -ti testimage:1.0
 Congrats! your first container is running
 ```
@@ -55,13 +55,13 @@ Idicamos un el nombre que le queremos dar a la imagen. En nuestro ejemplo se cre
 ### Operativa con contenedores e imagenes
 #### docker ps
 Mostramos los contenedores en funcionamiento
-```
+```ShellSession
 $ docker ps
 CONTAINER ID        IMAGE                   COMMAND                  CREATED                  STATUS              PORTS               NAMES
 b815687e3738        oneboxtm/firstrun:1.0   "/bin/sh -c /entry..."   Less than a second ago   Up 4 seconds                            loving_snyder
 ```
 Si ademas queremos ver los contenedores parados o con fallos, podemos añadir la opcion ***-a***
-```
+```ShellSession
 docker ps -a
 CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS                           PORTS               NAMES
 b815687e3738        oneboxtm/firstrun:1.0   "/bin/sh -c /entry..."   52 seconds ago      Up About a minute                                    loving_snyder
@@ -70,7 +70,7 @@ b815687e3738        oneboxtm/firstrun:1.0   "/bin/sh -c /entry..."   52 seconds 
 ```
 #### docker start/stop/kill
 Estas opciones nos permiten arrancar, parar o matar contenedores ya creados.
-```sh
+```ShellSession
 $ docker ps -a
 CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS               NAMES
 15264a742173        oneboxtm/firstrun:1.0   "/bin/sh -c /entry..."   11 days ago         Up 32 minutes                           vibrant_roentgen
@@ -87,7 +87,7 @@ CONTAINER ID        IMAGE                   COMMAND                  CREATED    
 ```
 #### docker images
 Esta opcion nos permite ver las imagenes que tenemos almacenadas en local.
-```sh
+```ShellSession
 $ docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
 oneboxtm/firstrun   1.0                 8cf8d286bcce        19 hours ago        9.57MB
@@ -96,7 +96,7 @@ alpine              3.7                 e21c333399e0        4 weeks ago         
 
 #### docker rm
 Con esta opción podemos borrar contenedores que ya no estan funcionando (stopped o killed).
-```sh
+```ShellSession
 $ docker ps -a
 CONTAINER ID        IMAGE                   COMMAND             CREATED             STATUS                    PORTS               NAMES
 788ddd86532f        oneboxtm/firstrun:1.0   "/entrypoint.sh"    19 hours ago        Exited (0) 19 hours ago                       amazing_clarke
@@ -107,12 +107,12 @@ CONTAINER ID        IMAGE               COMMAND             CREATED             
 ```
 Si se quieren borrar todas los contenedores este comando es muy útil:
 
-```sh
+```ShellSession
 $ docker rm $(docker ps -qa)
 ```
 #### docker rmi
 Con esta opción podemos borrar imagenes que ya no usen nuestros contenedores. Para poderlas borrar correctamente se necesita que no haya ningun contenedor creado que dependa de la imagen a borrar.
-```sh
+```ShellSession
 $ docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
 oneboxtm/firstrun   1.0                 8cf8d286bcce        19 hours ago        9.57MB
@@ -131,12 +131,12 @@ alpine              3.7                 e21c333399e0        4 weeks ago         
 ```
 Si se quieren borrar todas las imagenes este comando es muy útil:
 
-```sh
+```ShellSession
 $ docker rmi $(docker images -qa)
 ```
 #### docker pull/push
 Con estas opciones podemos descargarnos imagenes en local o subirlas a algun repositorio remoto. Muchos de estos respositorio, como el de docker hub, antes necesitan que nos autentiquemos, para eso usaremos el comando ***docker login***
-```sh
+```ShellSession
 $ docker pull oneboxtm/firstrun:1.0
 1.0: Pulling from oneboxtm/firstrun
 2fdfe1cd78c2: Pull complete
@@ -168,7 +168,7 @@ The push refers to a repository [docker.io/oneboxtm/firstrun]
 
 ### Arrancar contenedor en background 
 Con la opción ***-d*** podemos arrancar un contenedor en el modo *detached*, es decir, en modo background. 
-```sh
+```ShellSession
 $ docker run -d oneboxtm/firstrun:1.0
 9c199902f8c40914d3af94f51b0177e12d703539b998ccab11c06299cfb4a812
 $ docker ps
@@ -178,7 +178,7 @@ CONTAINER ID        IMAGE                   COMMAND                  CREATED    
 ### Arrancar contenedor pasandole variables de entorno
 Con la opción ***-e*** podemos pasarle una o mas variables de entorno
 
-```sh
+```ShellSession
 $ docker run -ti -e TEST1_ENV=PRUEBA1 -e TEST2_ENV=PRUEBA2 oneboxtm/firstrun:1.0
 #####################
 ENVIRONMENT VARIABLES
@@ -199,7 +199,7 @@ Congrats! your first container is running
 ### Arrancar un contenedor escuchando en uno o varios puertos
 Con la opción ***-p PUERTO_LOCAL:PUERTO_CONTENEDOR*** podemos abrir puertos para poder consultar el contenedor desde fuera
 
-```sh
+```ShellSession
 $ docker run -d -p 15060:5060 -e NCPORT=5060 oneboxtm/firstrun:1.0
 1bae82e2fefd1fb40da6d4b76dc3789518bc2b40b864c4eceb33ed8c568d6e8d
 $ telnet localhost 15060
@@ -229,7 +229,7 @@ Congrats! your first container is running
 
 ### Arrancar un contenedor y que se borre automaticamente cuando lo paramos
 Una opción muy util ( ***--rm*** ) es la de permitir que un contenedor se borre automaticamente cuando lo paramos o lo matamos.
-```sh
+```ShellSession
 $ docker run -ti --rm oneboxtm/firstrun:1.0
 #####################
 ENVIRONMENT VARIABLES
@@ -256,14 +256,14 @@ echo "HOLA" > fichero.txt
 ```
 Y en el Dockerfile indicamos que lo añada
 
-```sh
+```Dockerfile
 FROM alpine:3.7
 MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
 COPY fichero.txt /fichero.txt
 CMD while true; do cat /fichero.txt && sleep 1 ; done
 ```
 Ahora construimos la imagen y arrancamos un contenedor
-```sh
+```ShellSession
 $ docker build . -t testing
 Sending build context to Docker daemon  3.072kB
 Step 1/4 : FROM alpine:3.7
@@ -289,7 +289,7 @@ También se puede usar el comando ***ADD*** , que ademas de permitir copiar un f
 Podemos definir variable de entorno en nuestras imagenes. El contenido de estas variables pueden ser substituidos si se vuelven a redefinir cuando se arranca un contenedor.
 
 Contenido del Dockerfile
-```sh
+```Dockerfile
 FROM alpine:3.7
 MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
 ENV TEST_ENV HOLA
@@ -297,7 +297,7 @@ CMD while true; do echo ${TEST_ENV} && sleep 1 ; done
 ```
 Volvemos a construir y ejecutamos:
 
-```sh
+```ShellSession
 $ docker build . -t testing
 Sending build context to Docker daemon  3.072kB
 Step 1/4 : FROM alpine:3.7
@@ -319,7 +319,7 @@ $ docker run --rm -ti testing
 HOLA
 ```
 Ahora volvemos a ejecutar pero volviendo a definir la variable de entorno con otro valor
-```sh
+```ShellSession
 $ docker run --rm -ti -e TEST_ENV=ADIOS testing
 ADIOS
 ```
