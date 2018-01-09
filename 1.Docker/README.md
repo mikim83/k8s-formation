@@ -335,7 +335,7 @@ $ docker run --rm -ti -e TEST_ENV=ADIOS testing
 ADIOS
 ```
 
-###Ejecutar un comando durante la creación de la imagen
+### Ejecutar un comando durante la creación de la imagen
 Hay veces en las que nos interesa poder ejecutar un comando durante la creación de la imagen, como por ejemplo poder instalar una aplicación, descomprimir un fichero, etc...
 
 Contenido del Dockerfile
@@ -348,7 +348,7 @@ RUN apk update && \
 CMD while true; do java -version && sleep 1 ; done
 ```
 
-###Multi-stage containers
+### Multi-stage containers
 Esta opcion nos permite crear dos o mas contenedores de tal manera que podamos acceder a ficheros del contenedor anterior. Es decir, podemos tener un primer paso donde se cree una imagen que compila codigo y en la segunda imagen se copia el binario resultante de esa compilacion y lo ejecuta. De esta manera podemos tener imagenes que compilan y que ademas ejecutan el binario resultante.
 
 Creamos un fichero hello.c
