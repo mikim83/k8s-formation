@@ -343,12 +343,109 @@ Contenido del Dockerfile
 FROM alpine:3.7
 MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
 RUN touch /tmp/file_test
-RUN apk update && apk add bash curl && \
-    mkdir -p /opt && \
-    curl -fSL https://gist.githubusercontent.com/n0ts/40dd9bd45578556f93e7/raw/0e9112d60fc0c9228a30e4c92d5e845df3bc1beb/get_oracle_jdk_linux_x64.sh -o /opt/get_oracle_jdk_linux_x64.sh && \
-    cd /opt
-CMD while true; do ls /opt && sleep 1 ; done
+RUN apk update && \
+    apk add openjdk8
+CMD while true; do java -version && sleep 1 ; done
 ```
+
+###Multi-stage containers
+Esta opcion nos permite crear dos o mas contenedores de tal manera que podamos acceder a ficheros del contenedor anterior. Es decir, podemos tener un primer paso donde se cree una imagen que compila codigo y en la segunda imagen se copia el binario resultante de esa compilacion y lo ejecuta. De esta manera podemos tener imagenes que compilan y que ademas ejecutan el binario resultante.
+
+Creamos un fichero hello.c
+```C
+/* Hello World program */
+
+#include<stdio.h>
+
+int main()
+{
+    printf("Hello World\n");
+
+}
+```
+Y ahora creamos un fichero Dockerfile
+
+```Dockerfile
+#BUILD CONTAINER
+FROM alpine:latest as builder
+MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
+ADD hello.c /hello.c
+RUN apk update && \
+    apk add build-base
+WORKDIR /
+RUN gcc -o hello hello.c
+
+#RUN CONTAINER
+FROM alpine:latest
+COPY --from=builder /hello .
+CMD while true; do /hello && sleep 1 ; done
+```
+
+Y ahora hacemos el build de la imagen
+
+```Shellsession
+$ docker build . -t ctest
+Sending build context to Docker daemon  3.072kB
+Step 1/9 : FROM alpine:latest as builder
+latest: Pulling from library/alpine
+2fdfe1cd78c2: Pull complete
+Digest: sha256:ccba511b1d6b5f1d83825a94f9d5b05528db456d9cf14a1ea1db892c939cda64
+Status: Downloaded newer image for alpine:latest
+ ---> e21c333399e0
+Step 2/9 : MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
+ ---> Running in 3fe4a9815960
+ ---> 45485947d576
+Removing intermediate container 3fe4a9815960
+Step 3/9 : ADD hello.c /hello.c
+ ---> 6221669737e4
+Step 4/9 : RUN apk update &&     apk add build-base
+ ---> Running in 62860a707212
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.7/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.7/community/x86_64/APKINDEX.tar.gz
+v3.7.0-50-gc8da5122a4 [http://dl-cdn.alpinelinux.org/alpine/v3.7/main]
+v3.7.0-49-g06d6ae04c3 [http://dl-cdn.alpinelinux.org/alpine/v3.7/community]
+OK: 9046 distinct packages available
+(1/18) Installing binutils-libs (2.28-r3)
+(2/18) Installing binutils (2.28-r3)
+(3/18) Installing gmp (6.1.2-r1)
+(4/18) Installing isl (0.18-r0)
+(5/18) Installing libgomp (6.4.0-r5)
+(6/18) Installing libatomic (6.4.0-r5)
+(7/18) Installing pkgconf (1.3.10-r0)
+(8/18) Installing libgcc (6.4.0-r5)
+(9/18) Installing mpfr3 (3.1.5-r1)
+(10/18) Installing mpc1 (1.0.3-r1)
+(11/18) Installing libstdc++ (6.4.0-r5)
+(12/18) Installing gcc (6.4.0-r5)
+(13/18) Installing musl-dev (1.1.18-r2)
+(14/18) Installing libc-dev (0.7.1-r0)
+(15/18) Installing g++ (6.4.0-r5)
+(16/18) Installing make (4.2.1-r0)
+(17/18) Installing fortify-headers (0.9-r0)
+(18/18) Installing build-base (0.5-r0)
+Executing busybox-1.27.2-r6.trigger
+OK: 159 MiB in 29 packages
+ ---> 8977c8c8cd70
+Removing intermediate container 62860a707212
+Step 5/9 : WORKDIR /
+ ---> 83f0386f72de
+Removing intermediate container 79d43295c512
+Step 6/9 : RUN gcc -o hello hello.c
+ ---> Running in 0cdb8bd8b08b
+ ---> 4075d7ab4329
+Removing intermediate container 0cdb8bd8b08b
+Step 7/9 : FROM alpine:latest
+ ---> e21c333399e0
+Step 8/9 : COPY --from=builder /hello .
+ ---> 4e84a9845907
+Step 9/9 : CMD while true; do /hello && sleep 1 ; done
+ ---> Running in 940892307bf8
+ ---> 843b8fe1b7c8
+Removing intermediate container 940892307bf8
+Successfully built 843b8fe1b7c8
+Successfully tagged ctest:latest
+```
+
 
 
 ## 1.5 Red en docker
