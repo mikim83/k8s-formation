@@ -166,6 +166,16 @@ The push refers to a repository [docker.io/oneboxtm/firstrun]
 
 ## Opciones de arranque de los contenedores
 
+### Arrancar un contenedor definiendole un nombre
+Por defecto cuando arrancamos un contenedor, Docker le pone un nombre aleataorio. Con la opción ***--name NOMBRE_CONTENEDOR*** le indicamos un nombre definido por nosotros y que luego podremos usar para referirnos a él.
+
+```ShellSession
+$ docker run -d --name firstrun oneboxtm/firstrun:1.0 
+f8d66944ecd6c9dc022aad2731692c4b481036c13ce0fa790e50fb6869a808c1
+$ docker ps
+CONTAINER ID        IMAGE                   COMMAND             CREATED                  STATUS              PORTS               NAMES
+f8d66944ecd6        oneboxtm/firstrun:1.0   "/entrypoint.sh"    Less than a second ago   Up 1 second                             firstrun
+```
 ### Arrancar contenedor en background 
 Con la opción ***-d*** podemos arrancar un contenedor en el modo *detached*, es decir, en modo background. 
 ```ShellSession
@@ -246,6 +256,7 @@ Congrats! your first container is running
 $ docker ps -a
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
 ```
+
 ## Opciones de creación de contenedores
 
 ### Añadir un fichero o directorio a nuestra imagen
@@ -324,8 +335,20 @@ $ docker run --rm -ti -e TEST_ENV=ADIOS testing
 ADIOS
 ```
 
+###Ejecutar un comando durante la creación de la imagen
+Hay veces en las que nos interesa poder ejecutar un comando durante la creación de la imagen, como por ejemplo poder instalar una aplicación, descomprimir un fichero, etc...
 
-
+Contenido del Dockerfile
+```Dockerfile
+FROM alpine:3.7
+MAINTAINER Miki Monguilod, mmonguilod@oneboxtm.com
+RUN touch /tmp/file_test
+RUN apk update && apk add bash curl && \
+    mkdir -p /opt && \
+    curl -fSL https://gist.githubusercontent.com/n0ts/40dd9bd45578556f93e7/raw/0e9112d60fc0c9228a30e4c92d5e845df3bc1beb/get_oracle_jdk_linux_x64.sh -o /opt/get_oracle_jdk_linux_x64.sh && \
+    cd /opt
+CMD while true; do ls /opt && sleep 1 ; done
+```
 
 
 ## 1.5 Red en docker
