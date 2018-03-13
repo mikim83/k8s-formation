@@ -446,13 +446,151 @@ Successfully built 843b8fe1b7c8
 Successfully tagged ctest:latest
 ```
 
-
-
 ## 1.5 Red en docker
+
+Las ultimas versiones de docker permiten crear redes virtuales donde correran nuestros contenedores.
+De esta manera se puede asignar la misma red a varios contenedores para permitir la interconexion entre ellos de forma interna, crear redes sin conexión hacia fuera, incluso crear contenedores sin ninguna conexion de red.
+
+Cuando instalamos docker por primera vez, de serie vienen 3 redes creadas. Para verlas usaremos el siguiente comando:
+
+```Shellsession
+$ docker network ls
+
+NETWORK ID          NAME                DRIVER
+7fca4eb8c647        bridge              bridge
+9f904ee27bf5        none                null
+cf03ee007fb4        host                host
+```
+
+Podemos ver tres redes, la red "bridge" es la red por defecto que usan los conetenedores que arrancamos. Es una tipo de red que da conexión hacia fuera. La red "host" es una red que solo permite la conexion interna pero no hacia fuera.
+
+Podremos crear nuevas redes con el siguiente comando:
+```Shellsession
+$ docker network create -d bridge net_testing
+41485bed1aabb49f1ca5cbe323638f91d62b52ab2210fa3a9b52d12ee8a55e7b
+$ docker network ls
+NETWORK ID          NAME                DRIVER              SCOPE
+13201cf644ce        bridge              bridge              local
+fc80d547b6bf        host                host                local
+41485bed1aab        net_testing         bridge              local
+843cd047b585        none                null                local
+```
+
+Con la opción ***-d*** podemos indicar que tipo de red queremos (bridge, host, none)
 
 ## 1.6 Enlazar contenedores
 
+Vamos a enlazar dos contenedores para que se vean entre ellos usando la opción ***link***:
+
+Primero arrancamos el contenedor de docker destino:
+```Shellsession
+$ docker run --rm -d -p 5060:5060 -e NCPORT=5060 --name firstrun oneboxtm/firstrun:1.0
+Unable to find image 'oneboxtm/firstrun:1.0' locally
+1.0: Pulling from oneboxtm/firstrun
+2fdfe1cd78c2: Pull complete
+7ad7ef040bbc: Pull complete
+338ec0baead8: Pull complete
+Digest: sha256:f2d85e61bbb4cfccd2813d8022d2620fc0c56e398f75b4cac31cb3181507e30f
+Status: Downloaded newer image for oneboxtm/firstrun:1.0
+b3fa845cc214afe46c02ef60db631135272c2c8f2389116f7101c4426f13b7b4
+```
+
+Seguidamente arrancamos otro contenedor creando un link al primero y ejecutamos un telent al puerto 5060 del contenedor destino usando el alias que le hemos indicado:
+
+```Shellsession
+$ docker run --rm -ti --link firstrun:target --name client busybox sh
+Unable to find image 'busybox:latest' locally
+latest: Pulling from library/busybox
+57310166fe88: Pull complete
+Digest: sha256:1669a6aa7350e1cdd28f972ddad5aceba2912f589f19a090ac75b7083da748db
+Status: Downloaded newer image for busybox:latest
+/ # telnet target 5060
+test
+^]
+Console escape. Commands are:
+
+ l	go to line mode
+ c	go to character mode
+ z	suspend telnet
+ e	exit telnet
+e
+/ # ping target
+PING target (172.17.0.2): 56 data bytes
+64 bytes from 172.17.0.2: seq=0 ttl=64 time=0.104 ms
+^C
+--- target ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.104/0.104/0.104 ms
+/ # cat /etc/hosts
+127.0.0.1	localhost
+::1	localhost ip6-localhost ip6-loopback
+fe00::0	ip6-localnet
+ff00::0	ip6-mcastprefix
+ff02::1	ip6-allnodes
+ff02::2	ip6-allrouters
+172.17.0.2	target b3fa845cc214 firstrun
+172.17.0.3	97dfd89d0a46
+```
+
+Como podemos observar nos hemos podido conectar al contenedor destino usando el alias indicado. También hemos podido hacer ping. Al final mostramos el fichero /etc/hosts donde se ve la entrada que automaticamente ha añadido docker.
+
+A continuación mostramos el log del contenedor destino para verificar que realmente hemos llegado:
+
+```Shellsession
+$ docker logs -f firstrun
+#####################
+ENVIRONMENT VARIABLES
+NCPORT=5060
+HOSTNAME=b3fa845cc214
+SHLVL=1
+HOME=/root
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PWD=/
+#####################
+Listening on [0.0.0.0] (family 0, port 5060)
+Connection from 172.17.0.3 33328 received!
+test
+```
+
+Ahora vamos a usar la red ***net_testing*** que hemos creado en el ejemplo anterior para conectar los dos contenedores:
+
+```Shellsession
+$ docker run --rm -d -p 5060:5060 -e NCPORT=5060 --name firstrun --network net_testing oneboxtm/firstrun:1.0
+c46ce878881e6ae7a09ebe95911d87961d49807c32539b3606f73bb967a43b8a
+$ docker run --rm -ti --network net_testing --name client busybox sh
+/ # cat /etc/hosts
+127.0.0.1	localhost
+::1	localhost ip6-localhost ip6-loopback
+fe00::0	ip6-localnet
+ff00::0	ip6-mcastprefix
+ff02::1	ip6-allnodes
+ff02::2	ip6-allrouters
+172.18.0.3	dc5cefb153ba
+/ # ping firstrun
+PING firstrun (172.18.0.2): 56 data bytes
+64 bytes from 172.18.0.2: seq=0 ttl=64 time=0.190 ms
+/ # telnet firstrun 5060
+test
+^]
+
+Console escape. Commands are:
+
+ l	go to line mode
+ c	go to character mode
+ z	suspend telnet
+ e	exit telnet
+e
+```
+
+Como vemos, al añadir los dos contenedores a la misma red, estos quedan enlazados automaticamente. De esta forma, en vez de añadir una entrada dentro del fichero /etc/hosts, docker crea una entrada con los nombres de los contenedores en un servidor dns interno. Por esa razón podemos hacer llamadas al contenedor por su nombre (***firstrun***)
+De esta manera no necesitamos añadir contenedores en ningun orden y todos los que añadamos a la red podran ser enlazados.
+
 ## 1.7 Arrancar un contenedor con volumen persistente
+
+Cuando usamos contendores de docker la información es efímera. Es decir, todos los ficheros que modifiquemos desapareceran junto con el contenedor. Para poder tener persistencia la opcion mas usada es montar un directorio dentro del contenedor. Esto hará que se compartan los datos y que cuando el contenedor desaparezca, estos persistan.
+
+
+
 
 ## 1.8 Wordpress + mysql
 
