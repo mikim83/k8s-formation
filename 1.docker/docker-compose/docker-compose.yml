@@ -61,11 +61,7 @@ volumes:
     name: haproxy
     driver_opts:
       type: none
-      device: /Users/mikim/sandbox/formation/haproxyconf
+      device: ${PWD}/haproxyconf
       o: bind
   wordpress:
     name: wordpress
-
-
-
-
