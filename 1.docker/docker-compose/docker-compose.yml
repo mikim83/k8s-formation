@@ -1,0 +1,71 @@
+version: "3.6"
+services:
+  wp_mysql:
+    image: mysql:latest
+    container_name: wp_mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wp
+      - MYSQL_PASSWORD=wppassword 
+    networks:
+      - wordpressnet
+    volumes:
+      - mysql:/var/lib/mysql
+  wordpress1:
+    image: wordpress:latest
+    container_name: wordpress1
+    environment:
+      - WORDPRESS_DB_HOST=wp_mysql
+      - WORDPRESS_DB_NAME=wordpress
+      - WORDPRESS_DB_USER=wp
+      - WORDPRESS_DB_PASSWORD=wppassword
+    networks:
+      - wordpressnet
+    volumes:
+      - wordpress:/var/www/html
+    depends_on:
+      - wp_mysql
+  wordpress2:
+    image: wordpress:latest
+    container_name: wordpress2
+    environment:
+      - WORDPRESS_DB_HOST=wp_mysql
+      - WORDPRESS_DB_NAME=wordpress
+      - WORDPRESS_DB_USER=wp
+      - WORDPRESS_DB_PASSWORD=wppassword
+    networks:
+      - wordpressnet
+    volumes:
+      - wordpress:/var/www/html
+    depends_on:
+      - wp_mysql
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy
+    networks:
+      - wordpressnet
+    volumes:
+      - haproxy:/usr/local/etc/haproxy
+    ports:
+      - "8080:80"
+    depends_on:
+      - wordpress1
+      - wordpress2
+networks:
+  wordpressnet:
+volumes:
+  mysql:
+    name: mysql
+  haproxy:
+    name: haproxy
+    driver_opts:
+      type: none
+      device: /Users/mikim/sandbox/formation/haproxyconf
+      o: bind
+  wordpress:
+    name: wordpress
+
+
+
+

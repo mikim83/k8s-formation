@@ -587,11 +587,220 @@ De esta manera no necesitamos añadir contenedores en ningun orden y todos los q
 
 ## 1.7 Arrancar un contenedor con volumen persistente
 
-Cuando usamos contendores de docker la información es efímera. Es decir, todos los ficheros que modifiquemos desapareceran junto con el contenedor. Para poder tener persistencia la opcion mas usada es montar un directorio dentro del contenedor. Esto hará que se compartan los datos y que cuando el contenedor desaparezca, estos persistan.
+Cuando usamos contendores de docker la información es efímera. Es decir, todos los ficheros que modifiquemos desapareceran junto con el contenedor. Para poder tener persistencia la opcion mas usada es montar un directorio dentro del contenedor. Esto hará que se compartan los datos con el host y que cuando el contenedor desaparezca, estos persistan.
+Para poder montar volúmenes de forma sencilla usaremos la opcion ***-v*** de docker, donde el primer argumento es el directorio local y el segundo el directorio destino dentro de la imagen de docker, siempre separado por dos puntos (:)
+
+```ShellSession
+✔ ~/sandbox/formation
+$ ls -la
+total 0
+drwxr-xr-x   2 mikim  staff   64 26 mar 11:56 .
+drwxr-xr-x  13 mikim  staff  416 19 mar 08:54 ..
+✔ ~/sandbox/formation
+$ docker run -ti --rm -v ${PWD}:/workspace oneboxtm/firstrun:1.0 bash
+bash-4.4# ls
+bin            entrypoint.sh  home           media          proc           run            srv            tmp            var
+dev            etc            lib            mnt            root           sbin           sys            usr            workspace
+bash-4.4# cd /workspace/
+bash-4.4# ls
+bash-4.4# exit
+✔ ~/sandbox/formation
+$ ls -al
+total 0
+drwxr-xr-x   2 mikim  staff   64 26 mar 11:56 .
+drwxr-xr-x  13 mikim  staff  416 19 mar 08:54 ..
+✔ ~/sandbox/formation
+$ ls -la
+total 0
+drwxr-xr-x   2 mikim  staff   64 26 mar 11:56 .
+drwxr-xr-x  13 mikim  staff  416 19 mar 08:54 ..
+✔ ~/sandbox/formation
+$ echo "Test1" > fichero.txt
+✔ ~/sandbox/formation
+$ docker run -ti --rm -v ${PWD}:/workspace oneboxtm/firstrun:1.0 bash
+bash-4.4# cd /workspace/
+bash-4.4# cat fichero.txt
+Test1
+bash-4.4# echo "Test2" >> fichero.txt
+bash-4.4# exit
+exit
+✔ ~/sandbox/formation
+$ cat fichero.txt
+Test1
+Test2
+```
+
+Esta forma es válida para pruebas rapidas o cosas sencillas, pero si necesitamos algo mas complejo, como que dos contenedores usen el mismo volumen, etc.. deberemos usar la opcion ***volume*** de docker.
+Esta opción consiste en primer crear un volumen que gestionará docker para luego usarlo en los contenedores que necesitemos. Este volumen será persistente.
+
+Creamos un volumen que llamaremos ***volumen1***:
+```ShellSession
+$ docker volume create --label datos volumen1
+volumen1
+$ docker volume ls
+DRIVER              VOLUME NAME
+local               volumen1
+```
+
+Ahora arrancamos un contenedor indicando que use el volumen recien creado, creamos un fichero temporal, destruimos el contenedor y arrancamos otro contenedor con el mismo volumen para comprobar que efectivamente el contenido esta intacto:
+
+```ShellSession
+$ docker run -ti --name voltest1 -v volumen1:/app ubuntu
+root@6e98ad238d9d:/# echo "testing" > /app/testfile.txt
+root@6e98ad238d9d:/# exit
+$ docker run -ti --name voltest2 -v volumen1:/app alpine
+/ # cat /app/testfile.txt
+testing
+```
 
 
 
 
 ## 1.8 Wordpress + mysql
 
+Vamos a crear un ejemplo de dos contenedores, uno con apache y wordpress y otro con un mysql que usará wordpress para guardar los datos. Como no queremos perder los datos de mysql, usaremos un volumen para la persistencia. La conectividad entre wordpress y mysql se realizará usando nombres de DNS. También guardaremos los datos de plugins y temas de wordpress en un volumen, para poder compartirlo en caso de querer levantar mas contenedores.
+
+Para empezar crearemos la red de docker donde correran nuestros contenedores:
+
+```ShellSession
+$ docker network create wordpressnet
+aa4e6239956bc7279b4de0df930ac24191c0670a65fdcae38968f97e487e86ed
+✔ ~
+11:35 $ docker network ls
+NETWORK ID          NAME                DRIVER              SCOPE
+2a56b9fcd39f        bridge              bridge              local
+85d7021af908        host                host                local
+cd61e7d64b62        none                null                local
+537b2493b5f7        wordpressnet        bridge              local
+```
+
+A continuación, crearemos el volumen que usará el contenedor de mysql:
+```ShellSession
+$ docker volume create mysql
+mysql
+$ docker volume ls
+DRIVER              VOLUME NAME
+local               mysql
+```
+Ahora solo nos queda arrancar el contenedor de mysql, usando la red y el volumen que hemos creado. Tambien le indicaremos que al arrancar cree un schema, usuario y contraseña para wordpress:
+```ShellSession
+
+$ docker run -d --network wordpressnet -v mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=rootpassword -e MYSQL_DATABASE=wordpress -e MYSQL_USER=wp -e MYSQL_PASSWORD=wppassword --name wp_mysql mysql:latest
+03039608fe6518f45748226dfbd134ee7191f8dbb1bc921e08a0b602ec5451bc
+```
+
+Comprobamos que se ha creado el schema y que podemos acceder las credenciales:
+```ShellSession
+
+$ docker exec -ti wp_mysql mysql -uwp -pwppassword -e "show databases"
+mysql: [Warning] Using a password on the command line interface can be insecure.
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| wordpress          |
++--------------------+
+```
+
+Como ya tenemos listo mysql, nos toca crear y configurar el contenedor de wordpress. Creamos un volumen:
+
+```ShellSession
+$ docker volume create wordpress
+wordpress
+```
+
+Y ahora arrancamos un contenedor usando la red y el volumen que hemos creado. Ademas le indicamos los datos de conexion a mysql:
+
+```ShellSession
+$docker run -d --network wordpressnet -v wordpress:/var/www/html -e WORDPRESS_DB_HOST=wp_mysql -e WORDPRESS_DB_NAME=wordpress -e WORDPRESS_DB_USER=wp -e WORDPRESS_DB_PASSWORD=wppassword -p 8080:80 --name wordpress wordpress:latest
+```
+
+Ahora ya podemos ir via nuestro navegador a http://localhost:8080 y realizar los pasos de la instalación.
+
+```ShellSession
+open http://localhost:8080
+```
+
+
+En este punto ya tenemos un contenedor con wordpress que usa un mysql corriendo en otro contenedor. 
+Ahora vamos a hacer algo similar pero con dos contenedores wordpress apuntando al mismo mysql, sirviendo el mismo contenido y con un balanceador de carga por delante.
+Primero de todo apagaremos y borraremos el contenedor de wordpress que habiamos creado para volver a crear dos nodos iguales pero con diferente nombre:
+
+```ShellSession
+$ docker stop wordpress; docker rm wordpress
+$ docker run -d --network wordpressnet -v wordpress:/var/www/html -e WORDPRESS_DB_HOST=wp_mysql -e WORDPRESS_DB_NAME=wordpress -e WORDPRESS_DB_USER=wp -e WORDPRESS_DB_PASSWORD=wppassword --name wordpress1 wordpress:latest
+$ docker run -d --network wordpressnet -v wordpress:/var/www/html -e WORDPRESS_DB_HOST=wp_mysql -e WORDPRESS_DB_NAME=wordpress -e WORDPRESS_DB_USER=wp -e WORDPRESS_DB_PASSWORD=wppassword --name wordpress2 wordpress:latest
+```
+
+Ahora para el balanceador de carga (haproxy) crearemos un volumen donde guardaremos su configuración:
+
+```ShellSession
+docker volume create haproxy
+```
+
+Y a continuación, crearemos un fichero de configuración:
+```ShellSession
+docker run -ti -v haproxy:/haproxy busybox vi /haproxy/haproxy.cfg
+```
+
+Ahora copiamos y pegamos:
+```
+global
+    log 127.0.0.1   local0
+    log 127.0.0.1   local1 notice
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    option forwardfor
+    option http-server-close
+    timeout connect 5000
+    timeout client 50000
+    timeout server 50000
+
+frontend all
+    bind *:80
+    default_backend wordpress_80
+
+backend wordpress_80
+   balance roundrobin
+   server wordpress1 wordpress1:80 check
+   server wordpress2 wordpress2:80 check
+```
+
+Para acabar, arrancaremos un contenedor con haproxy, usando la red y el volumen que hemos creado:
+```ShellSession
+docker run -d --network wordpressnet --name haproxy -p 8080:80 -v haproxy:/usr/local/etc/haproxy:ro haproxy:latest
+```
+
+Ahora ya podemos volver a abrir la url http://localhost:8080 y veremos nuestro wordpress de nuevo.
+Para comprobar que realmente se estan balanceando las peticiones solo hay que mirar los logs de los contenedores wordpress.
+
+
 ## 1.9 Docker-compose
+
+Si tuvieramos que hacer despliegues similares al que hemos hecho en el punto 1.8 muy a menudo, seria recomendado usar la herramienta docker-compose. 
+Con docker-compose podemos orquestrar la creacion y configuracion de uno o mas componentes de docker de una sola vez. En la carpeta ***docker-compose*** hay un ejemplo de como crear el ejemplo anterior via docker-compose:
+
+```ShellSession
+$ cd docker-compose
+$ docker-compose up
+Creating wp_mysql ... done
+Creating wordpress1 ... done
+Creating wordpress2 ... done
+Creating haproxy    ... done
+Attaching to wp_mysql, wordpress1, wordpress2, haproxy
+...
+```
+Y para borrar todos los objetos creados:
+```ShellSession
+$ docker-compose rm
+Going to remove haproxy, wordpress2, wordpress1, wp_mysql
+Are you sure? [yN] y
+Removing haproxy    ... done
+Removing wordpress2 ... done
+Removing wordpress1 ... done
+Removing wp_mysql   ... done
+```
