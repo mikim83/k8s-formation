@@ -4,5 +4,4 @@ ADD entrypoint.sh /
 
 RUN apk update && apk add bash netcat-openbsd
 
-
-CMD /entrypoint.sh
+CMD ["/entrypoint.sh"]
