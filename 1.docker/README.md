@@ -793,7 +793,12 @@ Creating wordpress2 ... done
 Creating haproxy    ... done
 Attaching to wp_mysql, wordpress1, wordpress2, haproxy
 ...
+
 ```
+Si estais en linux y teneis que ejecutar el comando como root, hacedlo usando:
+
+***sudo -E docker-compose up***
+
 Y para borrar todos los objetos creados:
 ```ShellSession
 $ docker-compose rm
